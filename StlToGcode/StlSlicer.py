@@ -1,6 +1,7 @@
 
 import math
 import numpy as np
+import GUI.UIForStl
 
 # Parameters, all defined in millimeters
 DEFAULT_PARAMETERS = {
@@ -122,10 +123,6 @@ def generate_infill_and_supports(auxdata, params, verbose):
 
     return infill
 
-
-# TODO: Factor out support material from infill patterns.
-# def generate_supports():
-#     pass
 
 
 def intersect(facet, z_ind, params, auxdata, verbose):

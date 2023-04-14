@@ -5,7 +5,7 @@ import GUI.UIForStl
 
 # Parameters, all defined in millimeters
 DEFAULT_PARAMETERS = {
-    "infill": 0.2,
+    "infill": 0.75,
     "perimeters": 1,
     "layer_height": 0.2,
     "nozzle_diameter": 0.4,
@@ -21,6 +21,12 @@ class Hexagon:
         self.ml = (unit * (-0.5), unit * 0.0)
         self.bl = (unit * (-0.5)/2.0, unit * 0.5 * (-math.sqrt(3.0)/2.0))
         self.br = (unit * 0.5/2.0, unit * 0.5 * (-math.sqrt(3.0)/2.0))
+
+class Triangle:
+    def __init__(self, unit):
+        self.v1 = (unit * 0.5, unit * 0.0)
+        self.v2 = (unit * (-0.5) / 2.0, unit * 0.5 * math.sqrt(3.0) / 2.0)
+        self.v3 = (unit * (-0.5) / 2.0, unit * (-0.5) * math.sqrt(3.0) / 2.0)
 
 
 def slice_model(parsed_stl, auxdata, params, verbose=False):
@@ -90,14 +96,21 @@ def generate_infill_and_supports(auxdata, params, verbose):
 
     # Hexagonal infill. Define hexagonal tessellation absolute to coordinate system.
     horiz = []
-    h = Hexagon(unit)
+   # h = Hexagon(unit)
+   # for x_off in np.arange(0, max_x + unit * 1.5, unit * 1.5):
+   #     horiz += [((h.mr[0] + x_off, h.mr[1]), (h.br[0] + x_off, h.br[1])),
+   #                         ((h.bl[0] + x_off, h.bl[1]), (h.ml[0] + x_off, h.ml[1])),
+   #                         ((h.ml[0] + x_off, h.ml[1]), (h.tl[0] + x_off, h.tl[1])),
+   #                         ((h.tl[0] + x_off, h.tl[1]), (h.tr[0] + x_off, h.tr[1])),
+   #                         ((h.tr[0] + x_off, h.tr[1]), (h.mr[0] + x_off, h.mr[1])),
+   #                         ((h.mr[0] + x_off, h.mr[1]), (h.mr[0] + x_off + unit / 2, h.mr[1]))]
+
+    t = Triangle(unit)
     for x_off in np.arange(0, max_x + unit * 1.5, unit * 1.5):
-        horiz += [((h.mr[0] + x_off, h.mr[1]), (h.br[0] + x_off, h.br[1])),
-                            ((h.bl[0] + x_off, h.bl[1]), (h.ml[0] + x_off, h.ml[1])),
-                            ((h.ml[0] + x_off, h.ml[1]), (h.tl[0] + x_off, h.tl[1])),
-                            ((h.tl[0] + x_off, h.tl[1]), (h.tr[0] + x_off, h.tr[1])),
-                            ((h.tr[0] + x_off, h.tr[1]), (h.mr[0] + x_off, h.mr[1])),
-                            ((h.mr[0] + x_off, h.mr[1]), (h.mr[0] + x_off + unit / 2, h.mr[1]))]
+        horiz += [((t.v1[0] + x_off, t.v1[1]), (t.v2[0] + x_off, t.v2[1])),
+                            ((t.v2[0] + x_off, t.v2[1]), (t.v3[0] + x_off, t.v3[1])),
+                            ((t.v3[0] + x_off, t.v3[1]), (t.v1[0] + x_off, t.v1[1]))]
+
 
     vert = []
     for y_off in np.arange(0, max_y + unit * 0.5 * math.sqrt(3), unit * 0.5 * math.sqrt(3)):

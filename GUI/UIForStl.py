@@ -7,11 +7,13 @@ from PyQt6.QtCore import QSettings, QSize, QPoint, Qt
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QMainWindow, QApplication, QFrame, QVBoxLayout, QFileDialog, QMessageBox
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-import click
 from copy import deepcopy
-
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import StlToGcode.Gcode
 import StlToGcode.StlSlicer
+
+import UIforGcode as GcodeScreen
 
 
 class MainWindow(QMainWindow):
@@ -78,10 +80,6 @@ class MainWindow(QMainWindow):
         aboutAction.setStatusTip('About Capstone Project')
         aboutAction.triggered.connect(self.aboutInfo)
 
-        # display statusbar
-        self.statusBar()
-        self.statusBar().showMessage("Ready")
-
         # display menu
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
@@ -99,11 +97,11 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
         toolbar.addAction(ConvertStlToGcode)
         toolbar.addSeparator()
-        #toolbar.
         toolbar.addAction(aboutAction)
         toolbar.addSeparator()
         toolbar.addAction(exitAction)
 
+        # display STL main window
         self.frame = QFrame()
         self.vl = QVBoxLayout()
         self.vtkWidget = QVTKRenderWindowInteractor(self.frame)
@@ -113,6 +111,8 @@ class MainWindow(QMainWindow):
         self.frame.setLayout(self.vl)
         self.setCentralWidget(self.frame)
 
+
+
         self.iren = self.vtkWidget.GetRenderWindow().GetInteractor()
         self.iren.Initialize()
         self.iren.Start()
@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
         if len(sys.argv) > 1:
             filename = sys.argv[1]
         else:
-            filename = "../simpleStlFiles/cube.stl"
+            filename = "../simpleStlFiles/3mmBox.stl"
         file_exists = exists(filename)
         if file_exists:
             self.loadSTL(filename)
@@ -157,6 +157,7 @@ class MainWindow(QMainWindow):
         outpath = filename.replace(".stl", ".gcode")
         print("Outputting to: {}".format(outpath))
         StlToGcode.Gcode.export(sliced, outpath)
+        GcodeScreen.visualize_gcode(outpath)
 
     # load STL file
     def loadSTL(self, filename):
@@ -181,9 +182,11 @@ class MainWindow(QMainWindow):
         self.ren.ResetCamera()
         self.vtkWidget.repaint()
 
+
+
     # display STL file selection dialog
     def showSTLFileDialog(self):
-        filename = QFileDialog.getOpenFileName(self, 'Open file', '', 'STL (*.stl)')
+        filename = QFileDialog.getOpenFileName(self)
         if filename[0] != "":
             f = open(filename[0], 'r')
             with f:
@@ -203,6 +206,8 @@ class MainWindow(QMainWindow):
     def resetCamera(self):
         self.ren.ResetCamera()
         self.vtkWidget.repaint()
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -872,7 +872,7 @@ def parseSTL(path):
 
 # MAIN PROGRAM LOGIC
 if __name__ == "__main__":
-    objfile = 'C:/Users/uzayi/Desktop/Ödev/CapstoneProject/simpleStlFiles/cube.stl'
+    objfile = 'C:/Users/uzayi/Desktop/Ödev/CapstoneProject/simpleStlFiles/3mmBox.gcode'
     if len(sys.argv) < 2:
         # Run the program with a pre-built cube for testing
         pass #debug()

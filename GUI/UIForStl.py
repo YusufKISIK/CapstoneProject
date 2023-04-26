@@ -8,11 +8,8 @@ from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QMainWindow, QApplication, QFrame, QVBoxLayout, QFileDialog, QMessageBox
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from copy import deepcopy
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 import StlToGcode.Gcode
 import StlToGcode.StlSlicer
-
 import UIforGcode as GcodeScreen
 
 
@@ -158,6 +155,8 @@ class MainWindow(QMainWindow):
         print("Outputting to: {}".format(outpath))
         StlToGcode.Gcode.export(sliced, outpath)
         GcodeScreen.visualize_gcode(outpath)
+
+
 
     # load STL file
     def loadSTL(self, filename):

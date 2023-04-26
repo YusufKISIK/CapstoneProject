@@ -25,6 +25,7 @@ def parse_gcode(filename):
 def export(sliced, outpath):
     f = open(outpath, "w")
     e_off = 0
+    print("G0 F4320.0 X20.0 Y20.0 Z0.0", file=f)
     for (x1, y1, z1), (x2, y2, z2) in sliced:
         if e_off > 100:
             e_off = 0

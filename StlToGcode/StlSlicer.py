@@ -1,22 +1,25 @@
 import math
 import numpy as np
+import GUI.UIForStl as UIForStl
 
 DEFAULT_PARAMETERS = {
-    "infill": 0.60,
-    "perimeters": 1,
-    "layer_height": 0.1,
+    "layer_height": 0.2,
     "nozzle_diameter": 0.1,
     "resolution": 0.5
 }
+
+infillsParam = 0.5
+scaleValue = 1.0
 
 
 class Triangle:
     def __init__(self, side):
         self.side = side
         self.h = math.sqrt(3) / 2 * side
-        self.v1 = (0.0,0.0)
-        self.v2 = (side,0.0)
-        self.v3 = (side/2, self.h)
+        self.v1 = (0.0, 0.0)
+        self.v2 = (side, 0.0)
+        self.v3 = (side / 2, self.h)
+        # self.center = (side/2, self.h/3)
 
 
 def slice_model(parsed_stl, auxdata, params, verbose=True):
@@ -27,20 +30,23 @@ def slice_model(parsed_stl, auxdata, params, verbose=True):
     parsed_stl.sort(key=lambda facet: min([vertex[2] for vertex in facet["vertices"]]))
     facets = [{"normal": d["normal"],
                "vertices": (
-                   (d["vertices"][0][0] + off_x, d["vertices"][0][1] + off_y, d["vertices"][0][2] + off_z),
-                   (d["vertices"][1][0] + off_x, d["vertices"][1][1] + off_y, d["vertices"][1][2] + off_z),
-                   (d["vertices"][2][0] + off_x, d["vertices"][2][1] + off_y, d["vertices"][2][2] + off_z),
+                   ((scaleValue * d["vertices"][0][0] + off_x), (scaleValue * d["vertices"][0][1] + off_y),
+                    (scaleValue * d["vertices"][0][2] + off_z)),
+                   ((scaleValue * d["vertices"][1][0] + off_x), (scaleValue * d["vertices"][1][1] + off_y),
+                    (scaleValue * d["vertices"][1][2] + off_z)),
+                   ((scaleValue * d["vertices"][2][0] + off_x), (scaleValue * d["vertices"][2][1] + off_y),
+                    (scaleValue * d["vertices"][2][2] + off_z))
                )}
               for d in parsed_stl]
     perimeters = generate_perimeters(facets, auxdata, params)
     infill = generate_infill_and_supports(auxdata, params)
     sliced = perimeters + infill
     sliced.sort(key=lambda x: x[0][2])
+    print(list.count(sliced, 0))
     return sliced
 
 
 def generate_perimeters(facets, auxdata, params):
-
     def my_round(x, base):
         return round(base * round(float(x) / base), 1)
 
@@ -64,13 +70,13 @@ def generate_perimeters(facets, auxdata, params):
 
 
 def generate_infill_and_supports(auxdata, params):
-    if params["infill"] == 0:
+    if infillsParam == 0:
         return []
 
-    max_x = auxdata["x_max"] - auxdata["x_min"]
-    max_y = auxdata["y_max"] - auxdata["y_min"]
-    max_z = auxdata["z_max"] - auxdata["z_min"]
-    unit = math.sqrt(max_x * max_y) * (1.00000001 - params["infill"]) / (2 * math.sqrt(2))
+    max_x = (auxdata["x_max"] - auxdata["x_min"]) * scaleValue
+    max_y = (auxdata["y_max"] - auxdata["y_min"]) * scaleValue
+    max_z = (auxdata["z_max"] - auxdata["z_min"]) * scaleValue
+    unit = math.sqrt(max_x * max_y) * (1.00000001 - infillsParam) / (2 * math.sqrt(2))
 
     horiz = []
     t = Triangle(unit)

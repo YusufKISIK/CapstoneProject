@@ -1,15 +1,16 @@
 import sys
 from os.path import exists
-
+import numpy as np
 import vtk
 import vtkmodules
 from PyQt6.QtCore import QSettings, QSize, QPoint, Qt
 from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import QMainWindow, QApplication, QFrame, QVBoxLayout, QFileDialog, QMessageBox
+from PyQt6.QtWidgets import QMainWindow, QApplication, QFrame, QVBoxLayout, QFileDialog, QMessageBox, QLineEdit, \
+    QStatusBar, QToolBar, QButtonGroup, QGroupBox, QCheckBox, QHBoxLayout
 from vtkmodules.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from copy import deepcopy
-import StlToGcode.Gcode
-import StlToGcode.StlSlicer
+import StlToGcode.Gcode as Gcode
+import StlToGcode.StlSlicer as StlSlicer
 import UIforGcode as GcodeScreen
 
 
@@ -77,6 +78,47 @@ class MainWindow(QMainWindow):
         aboutAction.setStatusTip('About Capstone Project')
         aboutAction.triggered.connect(self.aboutInfo)
 
+        refreshAction = QAction(QIcon('../icons/refresh.png'), 'About', self)
+        refreshAction.setStatusTip('Refresh Time Data')
+        refreshAction.triggered.connect(self.showSelectedTimeData)
+
+        self.textboxScale = QLineEdit(self)
+        self.textboxScale.setReadOnly(True)
+
+        self.textboxInfill = QLineEdit(self)
+        self.textboxInfill.setReadOnly(True)
+
+        self.textboxTimeData = QLineEdit(self)
+        self.textboxTimeData.setReadOnly(True)
+
+        # Create the checkboxes
+        self.cb1 = QCheckBox("0.5", self)
+        self.cb2 = QCheckBox("1", self)
+        self.cb3 = QCheckBox("2", self)
+        self.cb4 = QCheckBox("3", self)
+        self.cbinfil1 = QCheckBox("0.3", self)
+        self.cbinfil2 = QCheckBox("0.5", self)
+        self.cbinfil3 = QCheckBox("0.7", self)
+
+        # Add the checkboxes to a group so that only one can be selected at a time
+        self.cb_group = QButtonGroup(self)
+        self.cb_group.addButton(self.cb1)
+        self.cb_group.addButton(self.cb2)
+        self.cb_group.addButton(self.cb3)
+        self.cb_group.addButton(self.cb4)
+        self.cb_group.setExclusive(True)
+        self.cb_group.buttonClicked.connect(self.showSelectedValue)
+
+        self.cbinfill_group = QButtonGroup(self)
+        self.cbinfill_group.addButton(self.cbinfil1)
+        self.cbinfill_group.addButton(self.cbinfil2)
+        self.cbinfill_group.addButton(self.cbinfil3)
+        self.cbinfill_group.setExclusive(True)
+        self.cbinfill_group.buttonClicked.connect(self.showSelectedInfillValue)
+
+        self.cbtime_group = QButtonGroup(self)
+        self.cbtime_group.buttonClicked.connect(self.showSelectedTimeData)
+
         # display menu
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
@@ -87,6 +129,7 @@ class MainWindow(QMainWindow):
         fileMenu.addAction(ConvertStlToGcode)
         fileMenu = menubar.addMenu('&Help')
         fileMenu.addAction(aboutAction)
+        fileMenu.addSeparator()
 
         # display toolbar
         toolbar = self.addToolBar('Exit')
@@ -97,8 +140,30 @@ class MainWindow(QMainWindow):
         toolbar.addAction(aboutAction)
         toolbar.addSeparator()
         toolbar.addAction(exitAction)
+        toolbar.addSeparator()
+        # Create a toolbar and add the checkboxes to it
+        toolbar = self.addToolBar('Scale')
+        toolbar.addWidget(self.cb1)
+        toolbar.addWidget(self.cb2)
+        toolbar.addWidget(self.cb3)
+        toolbar.addWidget(self.cb4)
+        toolbar.addSeparator()
+        toolbar.addWidget(self.textboxScale)
+        toolbar.addSeparator()
+        toolbar.addWidget(self.cbinfil1)
+        toolbar.addWidget(self.cbinfil2)
+        toolbar.addWidget(self.cbinfil3)
+        toolbar.addSeparator()
+        toolbar.addWidget(self.textboxInfill)
+        toolbar.addSeparator()
+        toolbar.addAction(refreshAction)
+        toolbar.addWidget(self.textboxTimeData)
 
-        # display STL main window
+        # create toolbar and add actions
+        toolbar = QToolBar()
+        self.addToolBar(toolbar)
+
+        # display statusbar
         self.frame = QFrame()
         self.vl = QVBoxLayout()
         self.vtkWidget = QVTKRenderWindowInteractor(self.frame)
@@ -107,8 +172,6 @@ class MainWindow(QMainWindow):
         self.vtkWidget.GetRenderWindow().AddRenderer(self.ren)
         self.frame.setLayout(self.vl)
         self.setCentralWidget(self.frame)
-
-
 
         self.iren = self.vtkWidget.GetRenderWindow().GetInteractor()
         self.iren.Initialize()
@@ -130,14 +193,13 @@ class MainWindow(QMainWindow):
         self.resize(self.settings.value("size", QSize(1080, 720)))
         self.move(self.settings.value("pos", QPoint(200, 200)))
 
-
         self.show()
 
     def slice_STL_file(self, filename):
 
         self.reader.SetFileName(filename)
         print(filename)
-        parsed, auxdata = StlToGcode.StlSlicer.parse_stl(filename)
+        parsed, auxdata = StlSlicer.parse_stl(filename)
 
         if filename:
             print("Output of parsed STL:")
@@ -146,17 +208,15 @@ class MainWindow(QMainWindow):
             print(auxdata)
             print("STL mesh ingestion done.\n")
 
-        params = deepcopy(StlToGcode.StlSlicer.DEFAULT_PARAMETERS)
-        sliced = StlToGcode.StlSlicer.slice_model(parsed, auxdata, params, verbose=False)
+        params = deepcopy(StlSlicer.DEFAULT_PARAMETERS)
+        sliced = StlSlicer.slice_model(parsed, auxdata, params, verbose=False)
         print(sliced)
         print("Slicing done.\n")
 
         outpath = filename.replace(".stl", ".gcode")
         print("Outputting to: {}".format(outpath))
-        StlToGcode.Gcode.export(sliced, outpath)
+        Gcode.export(sliced, outpath)
         GcodeScreen.visualize_gcode(outpath)
-
-
 
     # load STL file
     def loadSTL(self, filename):
@@ -181,11 +241,9 @@ class MainWindow(QMainWindow):
         self.ren.ResetCamera()
         self.vtkWidget.repaint()
 
-
-
     # display STL file selection dialog
     def showSTLFileDialog(self):
-        filename = QFileDialog.getOpenFileName(self)
+        filename = QFileDialog.getOpenFileName(self, 'Open file', '', 'STL (*.stl)')
         if filename[0] != "":
             f = open(filename[0], 'r')
             with f:
@@ -202,10 +260,29 @@ class MainWindow(QMainWindow):
         QMessageBox.about(self, "About",
                           "<h3>Capstone Project By Yusuf IŞIK</h3>"
                           "Copyright &#169;Yusuf IŞIK")
+
+    def showSelectedValue(self, checkbox):
+        if checkbox.isChecked():
+            self.textboxScale.setText(
+                "* with " + checkbox.text() + " mm x " + checkbox.text() + " mm x " + checkbox.text() + " mm")
+        else:
+            self.textboxScale.clear()
+        StlSlicer.scaleValue = float(checkbox.text())
+
+    def showSelectedInfillValue(self, checkbox):
+        if checkbox.isChecked():
+            self.textboxInfill.setText("Infill Rate = " + checkbox.text())
+        else:
+            self.textboxInfill.clear()
+        StlSlicer.infillsParam = float(checkbox.text())
+
+    def showSelectedTimeData(self):
+        self.textboxTimeData.setText("Total Move = " + str(Gcode.MoveCount))
+        print("Total Move = " + str(Gcode.MoveCount))
+
     def resetCamera(self):
         self.ren.ResetCamera()
         self.vtkWidget.repaint()
-
 
 
 if __name__ == "__main__":
@@ -214,5 +291,3 @@ if __name__ == "__main__":
     app.setWindowIcon(QIcon('../icons/main.png'))
     window.setWindowIcon(QIcon('../icons/main.png'))
     sys.exit(app.exec())
-
-

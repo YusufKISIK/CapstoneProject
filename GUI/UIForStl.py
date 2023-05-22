@@ -78,7 +78,11 @@ class MainWindow(QMainWindow):
         aboutAction.setStatusTip('About Capstone Project')
         aboutAction.triggered.connect(self.aboutInfo)
 
-        refreshAction = QAction(QIcon('../icons/refresh.png'), 'About', self)
+        resetCameraAction = QAction(QIcon('../icons/resetCamera.png'), 'Reset', self)
+        resetCameraAction.setStatusTip('Reset The Camera')
+        resetCameraAction.triggered.connect(self.resetCamera)
+
+        refreshAction = QAction(QIcon('../icons/refresh.png'), 'Refresh Time', self)
         refreshAction.setStatusTip('Refresh Time Data')
         refreshAction.triggered.connect(self.showSelectedTimeData)
 
@@ -140,6 +144,8 @@ class MainWindow(QMainWindow):
         toolbar.addAction(aboutAction)
         toolbar.addSeparator()
         toolbar.addAction(exitAction)
+        toolbar.addSeparator()
+        toolbar.addAction(resetCameraAction)
         toolbar.addSeparator()
         # Create a toolbar and add the checkboxes to it
         toolbar = self.addToolBar('Scale')
@@ -209,7 +215,7 @@ class MainWindow(QMainWindow):
             print("STL mesh ingestion done.\n")
 
         params = deepcopy(StlSlicer.DEFAULT_PARAMETERS)
-        sliced = StlSlicer.slice_model(parsed, auxdata, params, verbose=False)
+        sliced = StlSlicer.slice_model(parsed, auxdata, params, verbose=True)
         print(sliced)
         print("Slicing done.\n")
 
@@ -281,7 +287,9 @@ class MainWindow(QMainWindow):
         print("Total Move = " + str(Gcode.MoveCount))
 
     def resetCamera(self):
+        self.ren.ResetCameraScreenSpace()
         self.ren.ResetCamera()
+        self.vtkWidget.clearMask()
         self.vtkWidget.repaint()
 
 

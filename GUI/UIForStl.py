@@ -96,7 +96,7 @@ class MainWindow(QMainWindow):
         self.textboxTimeData.setReadOnly(True)
 
         # Create the checkboxes
-        self.cb1 = QCheckBox("0.5", self)
+        self.cb1 = QCheckBox("0.9", self)
         self.cb2 = QCheckBox("1", self)
         self.cb3 = QCheckBox("2", self)
         self.cb4 = QCheckBox("3", self)
@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
         self.settings = QSettings('Capstone Project', 'MainWindow')
         # Initial window size/pos last saved. Use default values for first time
         self.resize(self.settings.value("size", QSize(1080, 720)))
-        self.move(self.settings.value("pos", QPoint(200, 200)))
+        self.move(self.settings.value("pos", QPoint(0, 0)))
 
         self.show()
 
@@ -223,6 +223,7 @@ class MainWindow(QMainWindow):
         print("Outputting to: {}".format(outpath))
         Gcode.export(sliced, outpath)
         GcodeScreen.visualize_gcode(outpath)
+        self.showSelectedTimeData()
 
     # load STL file
     def loadSTL(self, filename):
@@ -283,8 +284,10 @@ class MainWindow(QMainWindow):
         StlSlicer.infillsParam = float(checkbox.text())
 
     def showSelectedTimeData(self):
-        self.textboxTimeData.setText("Total Move = " + str(Gcode.MoveCount))
-        print("Total Move = " + str(Gcode.MoveCount))
+        Gcode.Movement()
+        self.textboxTimeData.setText("Total Movement = " + str(Gcode.total_move_count) + " s")
+        # QMessageBox.about(self, "Time Data", "Total Time = " + str(Gcode.total_move_count) + " s\n")
+        print("Total Time = " + str(Gcode.total_move_count) + " s\n")
 
     def resetCamera(self):
         self.ren.ResetCameraScreenSpace()

@@ -23,7 +23,7 @@ class Triangle:
 
 
 def slice_model(parsed_stl, auxdata, params, verbose=True):
-    off_x, off_y, off_z = -1.0 * auxdata["x_min"], -1.0 * auxdata["y_min"], -1.0 * auxdata["z_min"]
+    off_x, off_y, off_z = -1.0 * auxdata["x_min"] * scaleValue, -1.0 * auxdata["y_min"] * scaleValue, -1.0 * auxdata["z_min"] * scaleValue
     if verbose:
         print("Offsets: {:+0.2f}x\t{:+0.2f}y\t{:+0.2f}z".format(off_x, off_y, off_z))
     # Sort the facets by minimum z-coordinate while applying offsets.
@@ -51,7 +51,7 @@ def generate_perimeters(facets, auxdata, params):
         return round(base * round(float(x) / base), 1)
 
     perimeters = []
-    z_max = my_round(auxdata["z_max"] - auxdata["z_min"], params["layer_height"])
+    z_max = my_round((auxdata["z_max"] - auxdata["z_min"]) * scaleValue, params["layer_height"])
     for z_ind in np.arange(0, z_max + params["layer_height"], params["layer_height"]):
         for facet in facets:
             min_z = min([vertex[2] for vertex in facet["vertices"]])
@@ -73,10 +73,10 @@ def generate_infill_and_supports(auxdata, params):
     if infillsParam == 0:
         return []
 
-    max_x = (auxdata["x_max"] - auxdata["x_min"]) * scaleValue
-    max_y = (auxdata["y_max"] - auxdata["y_min"]) * scaleValue
-    max_z = (auxdata["z_max"] - auxdata["z_min"]) * scaleValue
-    unit = math.sqrt(max_x * max_y) * (1.00000001 - infillsParam) / (2 * math.sqrt(2))
+    max_x = ((auxdata["x_max"] * scaleValue) - (auxdata["x_min"] * scaleValue))
+    max_y = ((auxdata["y_max"] * scaleValue) - (auxdata["y_min"] * scaleValue))
+    max_z = ((auxdata["z_max"] * scaleValue) - (auxdata["z_min"] * scaleValue))
+    unit = math.sqrt(max_x * max_y  * scaleValue) * (1.00000001 - infillsParam) / (2 * math.sqrt(2))
 
     horiz = []
     t = Triangle(unit)
@@ -105,7 +105,7 @@ def generate_infill_and_supports(auxdata, params):
 
     infill = []
     for z_off in np.arange(0, max_z, params["layer_height"]):
-        infill += [((x1, y1, z_off), (x2, y2, z_off)) for ((x1, y1), (x2, y2)) in vert]
+        infill += [((x1 * scaleValue, y1 * scaleValue, z_off * scaleValue), (x2 * scaleValue, y2 * scaleValue, z_off * scaleValue)) for ((x1, y1), (x2, y2)) in vert]
 
     return infill
 
@@ -138,8 +138,8 @@ def intersect(facet, z_ind, params):
                     t1 = (x_ind - xl1) / (xr - xl1)
                     t2 = (x_ind - xl2) / (xr - xl2)
                     segments.append((
-                        (x_ind, (yr - yl1) * t1 + yl1, z_ind),
-                        (x_ind, (yr - yl2) * t2 + yl2, z_ind),
+                        (x_ind * scaleValue, (yr - yl1) * t1 + yl1 * scaleValue, z_ind * scaleValue),
+                        (x_ind * scaleValue, (yr - yl2) * t2 + yl2 * scaleValue, z_ind * scaleValue),
                     ))
 
             def fill_case_2(left, right1, right2):
@@ -151,8 +151,8 @@ def intersect(facet, z_ind, params):
                     t1 = (x_ind - xl) / (xr1 - xl)
                     t2 = (x_ind - xl) / (xr2 - xl)
                     segments.append((
-                        (x_ind, (yr1 - yl) * t1 + yl, z_ind),
-                        (x_ind, (yr2 - yl) * t2 + yl, z_ind),
+                        (x_ind * scaleValue, (yr1 - yl) * t1 + yl * scaleValue, z_ind * scaleValue),
+                        (x_ind * scaleValue, (yr2 - yl) * t2 + yl * scaleValue, z_ind * scaleValue),
                     ))
 
             if len(lefts) == 2:
@@ -176,7 +176,7 @@ def intersect(facet, z_ind, params):
         if len(points_mid_layer) == 2:
             x1, y1, z1 = points_mid_layer[0][0], points_mid_layer[0][1], z_ind
             x2, y2, z2 = points_mid_layer[1][0], points_mid_layer[1][1], z_ind
-            segments.append(((x1, y1, z1), (x2, y2, z2)))
+            segments.append(((x1 * scaleValue, y1 * scaleValue, z1 * scaleValue), (x2 * scaleValue, y2 * scaleValue, z2 * scaleValue)))
 
         elif len(points_mid_layer) == 0:
             if len(points_blw_layer) == 2:
@@ -193,8 +193,8 @@ def intersect(facet, z_ind, params):
             t2 = (z_ind - pz) / (z2 - pz)
 
             segments.append((
-                ((x1 - px) * t1 + px, (y1 - py) * t1 + py, z_ind),
-                ((x2 - px) * t2 + px, (y2 - py) * t2 + py, z_ind),
+                ((x1 - px) * t1 + px * scaleValue, (y1 - py) * t1 + py * scaleValue, z_ind * scaleValue),
+                ((x2 - px) * t2 + px * scaleValue, (y2 - py) * t2 + py * scaleValue, z_ind * scaleValue),
             ))
     return segments
 

@@ -2,7 +2,7 @@ import math
 from vpython import vector
 import GUI.UIForStl as UIstl
 
-MoveCount = 0
+total_move_count = 0
 
 
 # define the function to parse a G-code file
@@ -28,6 +28,7 @@ def parse_gcode(filename):
 
 
 def export(sliced, outpath, offset=0, g92number=0):
+    global total_move_count
     f = open(outpath, "w")
     e_off = 0
     print("G0 F4320.0 X20.0 Y20.0 Z0.0", file=f)
@@ -46,3 +47,7 @@ def export(sliced, outpath, offset=0, g92number=0):
     MoveCount = total_move_count
     print(MoveCount)
     return MoveCount
+
+
+def Movement():
+    return total_move_count

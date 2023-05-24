@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
 
     def showSelectedTimeData(self):
         Gcode.Movement()
-        self.textboxTimeData.setText("Total Movement = " + str(Gcode.total_move_count) + " s")
+        self.textboxTimeData.setText("Total Movement = " + str(Gcode.total_move_count))
         # QMessageBox.about(self, "Time Data", "Total Time = " + str(Gcode.total_move_count) + " s\n")
         print("Total Time = " + str(Gcode.total_move_count) + " s\n")
 
